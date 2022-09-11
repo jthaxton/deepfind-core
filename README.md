@@ -11,6 +11,13 @@ We will rely heavily on machine learning to identify the deepfakes. Since ML is 
 * Easily scalable
 * Separation of concerns
 
+### K8s (Authless)
+[authless microservices arch](./k8s_proposal(authless).png "authless microservices arch")
+#### Benefits
+* Easily scalable
+* Separation of concerns
+* Less complicated than with auth
+
 ### Pseudo "Monolith"
 [monolith arch](./monolith_proposal.png "monolith arch")
 #### Benefits
