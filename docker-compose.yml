@@ -1,0 +1,44 @@
+version: '3.1'
+services:
+    mongo:
+        image: mongo
+        restart: always
+        environment:
+          MONGO_INITDB_ROOT_USERNAME: root
+          MONGO_INITDB_ROOT_PASSWORD: example
+        ports:
+          - 27017:27017
+        networks:
+          - bridge
+    store_service:
+        image: store_service #14jthaxton/store_service:1.0
+        restart: always
+        container_name: store_service
+        expose: 
+          - 8081
+        ports:
+          - 8081:8080
+        environment:
+          ME_CONFIG_MONGODB_ADMINUSERNAME: root
+          ME_CONFIG_MONGODB_ADMINPASSWORD: example
+        networks:
+          - bridge
+          - core-store
+        depends_on:
+          - mongo
+    gateway:
+        container_name: gateway_service
+        image: gateway_service
+        restart: always
+        ports:
+          - 8080:8080
+        networks:
+          - core-store
+          - bridge
+        depends_on:
+          - store_service
+networks:
+  bridge:
+    driver: bridge
+  core-store:
+    driver: bridge
