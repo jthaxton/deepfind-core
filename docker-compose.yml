@@ -2,6 +2,7 @@ version: '3.1'
 services:
     mongo:
         image: mongo
+        container_name: mongo
         restart: always
         environment:
           MONGO_INITDB_ROOT_USERNAME: root
@@ -11,7 +12,7 @@ services:
         networks:
           - bridge
     store_service:
-        image: store_service #14jthaxton/store_service:1.0
+        image: 14jthaxton/store_service:1.0
         restart: always
         container_name: store_service
         expose: 
@@ -23,7 +24,6 @@ services:
           ME_CONFIG_MONGODB_ADMINPASSWORD: example
         networks:
           - bridge
-          - core-store
         depends_on:
           - mongo
     gateway:
@@ -33,10 +33,38 @@ services:
         ports:
           - 8080:8080
         networks:
-          - core-store
           - bridge
         depends_on:
           - store_service
+          - atlas
+          - katana
+    atlas:
+        container_name: atlas
+        image: 14jthaxton/atlas:1.0
+        ports:
+          - "8082:8080"
+        depends_on:
+          - postgres
+        networks:
+          - bridge
+    postgres:
+        container_name: job_db
+        image: postgres
+        environment:
+          POSTGRES_USER: 'root'
+          POSTGRES_PASSWORD: 'example'
+          POSTGRES_DB: 'job_db'
+        ports:
+        - "5432:5432"
+        networks:
+          - bridge
+    katana:
+      image: 14jthaxton/katana:1.0
+      container_name: katana
+      ports:
+          - "8083:8080"
+      networks:
+          - bridge
 networks:
   bridge:
     driver: bridge
