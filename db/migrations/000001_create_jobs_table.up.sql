@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS jobs(
+  id SERIAL PRIMARY KEY,
+  custom_id text NOT NULL,
+  kind VARCHAR(100) NOT NULL,
+  data_json json,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

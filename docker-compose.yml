@@ -12,7 +12,7 @@ services:
         networks:
           - bridge
     store_service:
-        image: 14jthaxton/store_service:1.0
+        image: store_service
         restart: always
         container_name: store_service
         expose: 
@@ -41,9 +41,14 @@ services:
     atlas:
         container_name: atlas
         image: 14jthaxton/atlas:1.0
+        environment: 
+          - POSTGRESQL_URL="postgres://root:example@localhost:5432/job_db?sslmode=disable"
+        command: migrate -database ${POSTGRESQL_URL} -path db/migrations up
         ports:
           - "8082:8080"
         depends_on:
+          - postgres
+        links:
           - postgres
         networks:
           - bridge
@@ -55,7 +60,7 @@ services:
           POSTGRES_PASSWORD: 'example'
           POSTGRES_DB: 'job_db'
         ports:
-        - "5432:5432"
+          - "5432:5432"
         networks:
           - bridge
     katana:
@@ -67,6 +72,4 @@ services:
           - bridge
 networks:
   bridge:
-    driver: bridge
-  core-store:
     driver: bridge

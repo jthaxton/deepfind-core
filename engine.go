@@ -2,56 +2,104 @@ package main
 
 import (
 	// "bytes"
+	"bytes"
 	"encoding/json"
-	"fmt"
-	"io/ioutil"
-	"net/http"
+	"log"
+
+	// "log"
+
+	// "io/ioutil"
+	// "net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jthaxton/deepfind-core/services"
 )
 
-type Engine struct{}
+type Handler struct{}
 type StoreResponse struct {
 	Document         map[string]string         `json:"document"`
 }
-func (e *Engine) HandleCheckVideo(ctx *gin.Context) {
-	url := ctx.DefaultQuery("customId", "")
-	if len(url) > 0 {
-		e.HandleSendReqToDataService(url, ctx)
-	}
+
+type BodyId struct {
+	CustomId string        `json:"customId`
 }
 
-func (e *Engine) HandleSendReqToDataService(url string, ctx *gin.Context) {
-	fmt.Println(url)   
-	fmt.Println("GOT HERE")   
-
-	postUrl := fmt.Sprintf("http://store_service:8080/find?customId='bbbbbbbbbbbbb.com'")
-	resp, err := http.Get(postUrl)
-if err != nil {
-   fmt.Println(err.Error())
-	 fmt.Println("FAILED TO GET")
-	 ctx.JSON(http.StatusOK, gin.H{"res": err.Error()})
-	 return
+type DocBody struct {
+	CustomId *string                   `json:"customId"`
 }
-
-defer resp.Body.Close()
-   body, err := ioutil.ReadAll(resp.Body)
-   if err != nil {
-			fmt.Println("FAILED TO READ BODY")
-      fmt.Println(err.Error())
-			ctx.JSON(http.StatusOK, gin.H{"res": err.Error()})
-			return
-   }
-	response := StoreResponse{}
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		fmt.Println("FAILED TO UNMARSHAL")
-		fmt.Println(err.Error())
-		ctx.JSON(http.StatusOK, gin.H{"res": err.Error()})
-
+type Body struct {
+	Document *DocBody            `json:"document"`
+}
+func (e *Handler) HandleCheckVideo(ctx *gin.Context) {
+	url := ctx.DefaultQuery("youtubeUrl", "")
+	if len(url) == 0 {
+		ctx.JSON(403,map[string]string{"error":"youtubeUrl not found"})
 		return
 	}
-	fmt.Println(response)
-	ctx.JSON(http.StatusOK, gin.H{"res": response})
-  //  sb := string(body)
+
+	// var m Body
+	existsInStore, err := services.FetchFromStore(url)
+
+	if err == nil {
+		ctx.JSON(200,gin.H{"document": string(existsInStore)})
+		return
+	} else {
+		log.Println(err.Error())
+	}
+		
+	// err := json.Unmarshal(existsInStore, &m)
+	// if err != nil {
+	// 	ctx.JSON(403,map[string]string{"error": err.Error()})
+	// 	return
+	// }
+
+	// log.Println(string(existsInStore))
+	// log.Println(m)
+	// if existsInStore != nil {
+	// 	ctx.JSON(200,gin.H{"document": string(existsInStore)})
+	// 	return
+	// }
+	// if err == nil {
+	// 	if err != nil {
+	// 		ctx.JSON(403,map[string]string{"error": err.Error()})
+	// 		return
+	// 		} else {
+	// 		ctx.JSON(200,map[string]*bytes.Buffer{"document": bytes.NewBuffer(existsInStoreBody)})
+	// 		return
+	// 	}
+	// }
+		body, err := json.Marshal(ctx.Request.Body)
+		if err != nil {
+			ctx.JSON(403,map[string]string{"error":err.Error()})
+			return
+		}
+
+		_, err = services.AddToJobs(url, body)
+		if err != nil {
+			ctx.JSON(403,map[string]string{"error": err.Error()})
+			return
+		}
+
+		addedToStore, err := services.AddToStore(url, body)
+		if err != nil {
+			ctx.JSON(403,map[string]string{"error": err.Error()})
+			return
+		}
+
+		existsInStoreBody, err := json.Marshal(addedToStore)
+		if err != nil {
+			ctx.JSON(403,map[string]string{"error": err.Error()})
+			return
+		}
+	
+		existsInStore, err = services.FetchFromStore(url)
+
+		if err == nil {
+			ctx.JSON(200,gin.H{"document": string(existsInStore)})
+			return
+		} else {
+			log.Println(err.Error())
+		}
+
+	ctx.JSON(200,map[string]*bytes.Buffer{"document": bytes.NewBuffer(existsInStoreBody)})
 }
