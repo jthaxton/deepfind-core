@@ -12,7 +12,7 @@ services:
         networks:
           - bridge
     store_service:
-        image: store_service
+        image: 14jthaxton/store_service:1.0
         restart: always
         container_name: store_service
         expose: 
@@ -28,7 +28,7 @@ services:
           - mongo
     gateway:
         container_name: gateway_service
-        image: gateway_service
+        image: 14jthaxton/gateway_service:1.0
         restart: always
         ports:
           - 8080:8080
